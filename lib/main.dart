@@ -14,67 +14,43 @@ class AplicacionFlutter extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        // Container: configurar el fondo, el padding y la alineación
-        body: Container(
-          color: const Color(0xFF0D2A5F),
-          padding: const EdgeInsets.all(16),
-          alignment: Alignment.center,
+        // Colocar los elementos uno sobre el otro con stack
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Mostrar la imagen de fondo
+            Image.asset("assets/images/fondo.jpg", fit: BoxFit.cover),
 
-          // Column: organizar los elementos verticalmente
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Text: mostrar texto en la pantalla
-              const Text(
-                "Bienvenido a Flutter",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Row: organizar los elementos horizontalmente
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            // Centrar el contenido en la pantalla
+            Center(
+              // Organizar los elementos verticalmente
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    color: const Color(0xFFC3DEF8),
-                    padding: const EdgeInsets.all(8),
-                    child: const Text(
-                      "Elemento A",
-                      style: TextStyle(fontWeight: FontWeight.w500),
+                  // Mostrar el nombre de la app
+                  const Text(
+                    "Catálogo de películas",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Container(
-                    color: const Color(0xFFC7F2FF),
-                    padding: const EdgeInsets.all(8),
-                    child: const Text(
-                      "Elemento B",
-                      style: TextStyle(fontWeight: FontWeight.w500),
-                    ),
+                  const SizedBox(height: 16),
+
+                  // Mostrar un ícono
+                  const Icon(Icons.movie, color: Colors.white, size: 50),
+                  const SizedBox(height: 16),
+
+                  // Mostrar el mensaje
+                  const Text(
+                    "Hello World",
+                    style: TextStyle(color: Colors.white, fontSize: 20),
                   ),
                 ],
               ),
-
-              SizedBox(height: 20),
-
-              // Stack: colocar los widgets uno sobre otro
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    width: 300,
-                    height: 60,
-                    color: const Color(0xFF97B0C5),
-                  ),
-                  Text("Hola mundo", style: TextStyle(color: Colors.white)),
-                ],
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
