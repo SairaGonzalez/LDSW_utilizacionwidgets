@@ -1,0 +1,110 @@
+rules_version = '2';
+
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// This security rules file assumes the following data structures:
+//
+// Collection: peliculas
+// Document ID: {peliculaId} (auto-generated ID)
+// Fields:
+//   - titulo: string (required, length 1..200) - Title of the movie
+//   - genero: string (required, length 0..100) - Movie genre
+//   - anio: string (required, length 0..10) - Release year
+//   - fechaCreacion: timestamp (required, immutable on update) - Creation timestamp
+//
+// Note: This application is an unauthenticated student demo app
+// (firebase_auth is not installed). Access to /peliculas/{peliculaId}
+// is intentionally unauthenticated per project requirements, with strict
+// schema, type, and size validation enforced on all writes.
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    // Check if the user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if user owns the resource (for user-owned documents)
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Verify UID hasn't been tampered with on create
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) ||
+        request.resource.data.uid == request.auth.uid;
+    }
+
+    // Ensure uid field is not modified on update
+    function uidNotModified() {
+      return !('uid' in request.resource.data) ||
+        request.resource.data.uid == resource.data.uid;
+    }
+
+    // Validate required fields exist
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    // Validate that the document contains only the allowed fields
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // Validate string length
+    function validStringLength(field, minLen, maxLen) {
+      return request.resource.data[field] is string &&
+        request.resource.data[field].size() >= minLen &&
+        request.resource.data[field].size() <= maxLen;
+    }
+
+    // Validate that the document hasn't changed in immutable fields
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators (Used in both create and update)
+    // ===============================================================
+
+    function isValidPelicula(data) {
+      return hasRequiredFields(['titulo', 'genero', 'anio', 'fechaCreacion']) &&
+        hasOnlyAllowedFields(['titulo', 'genero', 'anio', 'fechaCreacion']) &&
+        data.titulo is string && data.titulo.size() > 0 && data.titulo.size() <= 200 &&
+        data.genero is string && data.genero.size() <= 100 &&
+        data.anio is string && data.anio.size() <= 10 &&
+        data.fechaCreacion is timestamp;
+    }
+
+    // ===============================================================
+    // Collection Rules: /peliculas/{peliculaId}
+    // ===============================================================
+
+    match /peliculas/{peliculaId} {
+      // Unauthenticated read and delete allowed for the student demo app
+      allow read: if true;
+      allow delete: if true;
+
+      // Enforce strict schema validation on both create and update
+      allow create: if isValidPelicula(request.resource.data);
+      allow update: if isValidPelicula(request.resource.data) &&
+        areImmutableFieldsUnchanged(['fechaCreacion']);
+    }
+
+    // ===============================================================
+    // Default Deny All Other Paths
+    // ===============================================================
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
